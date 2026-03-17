@@ -1,0 +1,55 @@
+# =========================================================
+# 雷达-相机标定结果误差检测（点云投影叠加 + 可选靶标平面误差）
+# 说明：
+# 1) 默认只做点云投影叠加（detector=none 或运行时不传 chess/aruco）
+# 2) 需要评估标定误差时：运行时参数传 chess 或 aruco
+# 3) 单位：
+#    - chessboard_square_mm / aruco_marker_length_mm：mm（毫米）
+#    - min_z_cam / max_z_cam：m（米），因为点云坐标通常是米
+# =========================================================
+
+topics:
+  cloud_topic: /livox/lidar
+  image_topic: /camera/camera/color/image_raw
+  camera_info_topic: /camera/camera/color/camera_info
+
+frames:
+  lidar_frame: livox_frame
+  camera_frame: camera_color_optical_frame
+
+sync_perf:
+  slop_sec: 0.10          # 图像与点云近似同步时间窗（秒）
+  max_points: 80000       # 每帧最多读取的点数（越大越慢）
+  min_z_cam: 0.1          # 相机坐标系下有效深度下限（米）
+  max_z_cam: 60.0         # 相机坐标系下有效深度上限（米）
+  point_radius: 2         # 投影点绘制半径（像素）
+
+overlay:
+  # depth：按深度着色（默认）
+  # plane_error：检测到靶标后，靶标区域内点按点到平面距离着色
+  color_mode: depth
+
+detector:
+  # none / chessboard / aruco
+  # 说明：运行时若传 chess/aruco，会覆盖这里的值
+  type: chessboard
+
+chessboard:
+  cols: 10                 # 内角点列数（inner corners）
+  rows: 6                 # 内角点行数（inner corners）
+  square_mm: 25.0         # 每个格子边长（mm）
+
+aruco:
+  # 仅允许 4 种字典，使用 dict_id 选择（修改这里的数字即可）：
+  #   0 -> DICT_4X4_1000
+  #   1 -> DICT_5X5_1000
+  #   2 -> DICT_6X6_1000
+  #   3 -> DICT_7X7_1000
+  dict_id: 0
+  marker_length_mm: 70.0 # marker 边长（mm）
+  prefer_id: -1           # 优先检测某个 marker id；-1 表示任意
+
+saving:
+  save_on_detect: false
+  save_dir: /tmp/lidar_overlay
+
